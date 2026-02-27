@@ -197,9 +197,23 @@ def main():
         )
         
         if playground:
+            # Add Sandpack import if not present (required for Nextra SSR)
+            content = fpath.read_text(encoding='utf-8')
+            if "import { Sandpack }" not in content:
+                lines = content.split('\n')
+                # Insert import before first non-empty line
+                insert_pos = 0
+                for idx, line in enumerate(lines):
+                    if line.strip():
+                        insert_pos = idx
+                        break
+                lines.insert(insert_pos, "import { Sandpack } from '@codesandbox/sandpack-react'\n")
+                fpath.write_text('\n'.join(lines), encoding='utf-8')
+            
+            # Append playground
             with open(fpath, 'a', encoding='utf-8') as f:
                 f.write("\n" + playground + "\n")
-            print(f"  ✅ Added")
+            print(f"  ✅ Added (with import)")
             success += 1
         else:
             print(f"  ❌ Failed")
