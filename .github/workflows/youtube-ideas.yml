@@ -1,0 +1,64 @@
+name: YouTube Ideas
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'Number of ideas to generate'
+        required: false
+        default: '10'
+        type: string
+      topic:
+        description: 'Topic/theme (optional, e.g., "AI coding tools")'
+        required: false
+        type: string
+      model:
+        description: 'Gemini model to use'
+        required: false
+        default: 'gemini-3.1-pro-preview'
+        type: choice
+        options:
+          - gemini-3.1-pro-preview
+          - gemini-2.5-pro-exp
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install google-genai
+      
+      - name: Generate YouTube ideas
+        env:
+          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        run: |
+          python scripts/youtube-ideas.py \
+            --count "${{ inputs.count }}" \
+            ${{ inputs.topic && format('--topic "{0}"', inputs.topic) || '' }} \
+            --model "${{ inputs.model }}" \
+            --output youtube_ideas.json
+      
+      - name: Upload ideas
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-ideas
+          path: youtube_ideas.json
+          retention-days: 30
+      
+      - name: Show preview
+        run: |
+          echo "✅ Generated ${{ inputs.count }} YouTube ideas"
+          echo "🤖 Model: ${{ inputs.model }}"
+          echo ""
+          echo "--- Preview ---"
+          cat youtube_ideas.json | head -50
