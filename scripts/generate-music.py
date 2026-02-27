@@ -44,7 +44,8 @@ def main():
         sys.exit(1)
     
     location = "us-central1"
-    model = "lyria-003"  # Lyria 3 - music + vocals + lyrics + cover art
+    model = "lyria-002"  # Lyria 2 (Vertex AI) - instrumental only
+    # Note: Lyria 3 exists but only in Gemini app, not Vertex AI API
     endpoint = f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/{model}:predict"
     
     print(f"🎵 Generating music with Lyria...")
@@ -113,28 +114,10 @@ def main():
         print(f"✅ Music generated successfully!")
         print(f"   🎵 Audio: {args.output} ({file_size / 1024 / 1024:.2f} MB)")
         
-        # 2. Lyrics (optional for Lyria 3)
-        lyrics = prediction.get('lyrics') or prediction.get('lyricsText')
-        if lyrics:
-            lyrics_path = args.output.replace('.wav', '_lyrics.txt')
-            Path(lyrics_path).write_text(lyrics, encoding='utf-8')
-            print(f"   📝 Lyrics: {lyrics_path}")
-        else:
-            # Create empty file for artifact upload
-            Path('generated_lyrics.txt').write_text("No lyrics generated (instrumental)", encoding='utf-8')
-            print(f"   📝 Lyrics: (instrumental track)")
-        
-        # 3. Cover art (optional for Lyria 3)
-        cover_art = prediction.get('coverArt') or prediction.get('imageContent')
-        if cover_art:
-            cover_path = args.output.replace('.wav', '_cover.png')
-            cover_data = base64.b64decode(cover_art)
-            Path(cover_path).write_bytes(cover_data)
-            print(f"   🎨 Cover: {cover_path} ({len(cover_data) / 1024:.1f} KB)")
-        else:
-            # Create placeholder for artifact upload
-            Path('generated_cover.png').write_bytes(b'')
-            print(f"   🎨 Cover: (not generated)")
+        # Lyria 2: instrumental only, no lyrics/cover
+        Path('generated_lyrics.txt').write_text("Instrumental track (Lyria 2)", encoding='utf-8')
+        Path('generated_cover.png').write_bytes(b'')
+        print(f"   📝 Instrumental track (no lyrics)")
         
         print(f"   ⏱️  Duration: {args.duration}s")
         
