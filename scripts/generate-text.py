@@ -14,9 +14,9 @@ def main():
     parser = argparse.ArgumentParser(description='Generate text via Gemini')
     parser.add_argument('--prompt', required=True, help='Text prompt')
     parser.add_argument('--model', default='gemini-3.1-pro-preview', help='Model name')
-    parser.add_argument('--max-tokens', type=int, default=8192, help='Max output tokens')
     parser.add_argument('--output', default='output.txt', help='Output file path')
-    parser.add_argument('--temperature', type=float, default=0.7, help='Temperature (0-2)')
+    parser.add_argument('--max-tokens', type=int, default=8192, help='Max output tokens')
+    parser.add_argument('--temperature', type=float, default=0.7, help='Temperature (0.0-2.0)')
     
     args = parser.parse_args()
     
@@ -29,11 +29,9 @@ def main():
     
     print(f"📝 Generating text...")
     print(f"   Model: {args.model}")
+    print(f"   Prompt: {args.prompt[:100]}{'...' if len(args.prompt) > 100 else ''}")
     print(f"   Max tokens: {args.max_tokens}")
     print(f"   Temperature: {args.temperature}")
-    print()
-    print(f"   Prompt: {args.prompt[:100]}{'...' if len(args.prompt) > 100 else ''}")
-    print()
     
     try:
         response = client.models.generate_content(
@@ -45,14 +43,13 @@ def main():
             )
         )
         
-        text = response.text
+        result_text = response.text
         
-        # Save to file
-        Path(args.output).write_text(text, encoding='utf-8')
+        Path(args.output).write_text(result_text, encoding='utf-8')
         
         print(f"✅ Text saved to: {args.output}")
-        print(f"   Length: {len(text)} characters")
-        print(f"   Lines: {text.count(chr(10)) + 1}")
+        print(f"   Characters: {len(result_text)}")
+        print(f"   Words: {len(result_text.split())}")
         
     except Exception as e:
         print(f"❌ Error: {e}")
