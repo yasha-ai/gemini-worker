@@ -97,6 +97,24 @@ gh workflow run youtube-ideas.yml \
 
 ---
 
+### 6. Generate Music (Lyria)
+**File:** `.github/workflows/generate-music.yml`
+
+Generates music via Vertex AI Lyria model.
+
+**Trigger:**
+```bash
+gh workflow run generate-music.yml \
+  -R yasha-ai/gemini-worker \
+  -f prompt="Upbeat electronic dance music" \
+  -f negative_prompt="slow tempo, vocals" \
+  -f duration=30
+```
+
+**Outputs:** WAV audio file (48kHz, default 30s) uploaded as artifact.
+
+---
+
 ## 🔐 Setup
 
 ### 1. Add GitHub Secret
