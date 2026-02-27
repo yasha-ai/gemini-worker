@@ -1,0 +1,70 @@
+name: Generate Voice
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: 'Text to synthesize (Russian)'
+        required: true
+        type: string
+      voice:
+        description: 'Voice preset'
+        required: false
+        default: 'Fenrir'
+        type: choice
+        options:
+          - Fenrir
+          - Kore
+          - Charon
+          - Aoede
+      model:
+        description: 'Gemini TTS model'
+        required: false
+        default: 'gemini-2.5-flash-preview-tts'
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install google-genai
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      
+      - name: Generate voice
+        env:
+          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        run: |
+          python scripts/generate-voice.py \
+            --text "${{ inputs.text }}" \
+            --voice "${{ inputs.voice }}" \
+            --model "${{ inputs.model }}" \
+            --output generated_voice.wav
+      
+      - name: Upload audio
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-voice
+          path: generated_voice.wav
+          retention-days: 30
+      
+      - name: Show info
+        run: |
+          echo "✅ Voice generated successfully"
+          echo "📝 Text: ${{ inputs.text }}"
+          echo "🎵 Voice: ${{ inputs.voice }}"
+          echo "🤖 Model: ${{ inputs.model }}"
+          echo ""
+          echo "--- Audio file info ---"
+          ffprobe -v quiet -print_format json -show_format -show_streams generated_voice.wav | jq '.format | {duration, size}'
