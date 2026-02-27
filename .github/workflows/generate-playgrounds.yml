@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.target_repo }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           path: target-repo
       
       - name: Setup Python
