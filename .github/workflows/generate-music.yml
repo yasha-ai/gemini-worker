@@ -54,11 +54,14 @@ jobs:
             --duration "${{ inputs.duration }}" \
             --output generated_music.wav
       
-      - name: Upload music
+      - name: Upload music artifacts
         uses: actions/upload-artifact@v4
         with:
           name: generated-music
-          path: generated_music.wav
+          path: |
+            generated_music.wav
+            generated_lyrics.txt
+            generated_cover.png
           retention-days: 30
       
       - name: Show info
@@ -68,6 +71,8 @@ jobs:
           ${{ inputs.negative_prompt && format('echo "🚫 Negative: {0}"', inputs.negative_prompt) || 'echo ""' }}
           ${{ inputs.seed && format('echo "🎲 Seed: {0}"', inputs.seed) || 'echo ""' }}
           echo ""
-          echo "--- Audio file info ---"
-          ls -lh generated_music.wav
-          file generated_music.wav
+          echo "--- Generated artifacts ---"
+          ls -lh generated_music.wav generated_lyrics.txt generated_cover.png 2>/dev/null || echo "Some artifacts missing"
+          echo ""
+          echo "--- Lyrics preview ---"
+          head -20 generated_lyrics.txt 2>/dev/null || echo "No lyrics"

@@ -44,7 +44,7 @@ def main():
         sys.exit(1)
     
     location = "us-central1"
-    model = "lyria-002"
+    model = "lyria-003"  # Lyria 3 - music + vocals + lyrics + cover art
     endpoint = f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/{model}:predict"
     
     print(f"🎵 Generating music with Lyria...")
@@ -91,28 +91,52 @@ def main():
             print(f"❌ API Error: {result['error'].get('message', result['error'])}")
             sys.exit(1)
         
-        # Extract audio
+        # Extract artifacts from Lyria 3 response
         if 'predictions' not in result or len(result['predictions']) == 0:
             print("❌ No predictions in response")
             print(f"Response: {json.dumps(result, indent=2)[:500]}")
             sys.exit(1)
         
-        audio_content = result['predictions'][0].get('audioContent')
+        prediction = result['predictions'][0]
         
+        # 1. Audio (required)
+        audio_content = prediction.get('audioContent')
         if not audio_content:
             print("❌ No audioContent in response")
             print(f"Response: {json.dumps(result, indent=2)[:500]}")
             sys.exit(1)
         
-        # Decode and save
         audio_data = base64.b64decode(audio_content)
         Path(args.output).write_bytes(audio_data)
         
         file_size = len(audio_data)
         print(f"✅ Music generated successfully!")
-        print(f"   📁 Output: {args.output}")
-        print(f"   📊 Size: {file_size / 1024 / 1024:.2f} MB")
-        print(f"   ⏱️  Duration: {args.duration}s (48kHz WAV)")
+        print(f"   🎵 Audio: {args.output} ({file_size / 1024 / 1024:.2f} MB)")
+        
+        # 2. Lyrics (optional for Lyria 3)
+        lyrics = prediction.get('lyrics') or prediction.get('lyricsText')
+        if lyrics:
+            lyrics_path = args.output.replace('.wav', '_lyrics.txt')
+            Path(lyrics_path).write_text(lyrics, encoding='utf-8')
+            print(f"   📝 Lyrics: {lyrics_path}")
+        else:
+            # Create empty file for artifact upload
+            Path('generated_lyrics.txt').write_text("No lyrics generated (instrumental)", encoding='utf-8')
+            print(f"   📝 Lyrics: (instrumental track)")
+        
+        # 3. Cover art (optional for Lyria 3)
+        cover_art = prediction.get('coverArt') or prediction.get('imageContent')
+        if cover_art:
+            cover_path = args.output.replace('.wav', '_cover.png')
+            cover_data = base64.b64decode(cover_art)
+            Path(cover_path).write_bytes(cover_data)
+            print(f"   🎨 Cover: {cover_path} ({len(cover_data) / 1024:.1f} KB)")
+        else:
+            # Create placeholder for artifact upload
+            Path('generated_cover.png').write_bytes(b'')
+            print(f"   🎨 Cover: (not generated)")
+        
+        print(f"   ⏱️  Duration: {args.duration}s")
         
     except requests.exceptions.RequestException as e:
         print(f"❌ Request failed: {e}")
