@@ -1,0 +1,87 @@
+name: Generate Playgrounds
+
+on:
+  workflow_dispatch:
+    inputs:
+      section:
+        description: 'Section to process (html, css, javascript, react, etc.)'
+        required: true
+        type: string
+      limit:
+        description: 'Max lessons to process (0 = all)'
+        required: false
+        default: '0'
+        type: string
+      model:
+        description: 'Gemini model to use'
+        required: false
+        default: 'gemini-3.1-pro-preview'
+        type: choice
+        options:
+          - gemini-3.1-pro-preview
+          - gemini-2.5-pro-exp
+          - gemini-2.0-flash-exp
+      target_repo:
+        description: 'Target repository (owner/repo)'
+        required: false
+        default: 'yasha-ai/yasha-learn-code'
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout worker repo
+        uses: actions/checkout@v4
+      
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.target_repo }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: target-repo
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install google-generativeai
+      
+      - name: Generate playgrounds
+        env:
+          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        run: |
+          python scripts/generate-playgrounds.py \
+            --section "${{ inputs.section }}" \
+            --limit "${{ inputs.limit }}" \
+            --model "${{ inputs.model }}" \
+            --target target-repo
+      
+      - name: Commit and push changes
+        working-directory: target-repo
+        run: |
+          git config user.name "Yasha Bot"
+          git config user.email "yasha-ai@tuta.io"
+          
+          if [[ -n $(git status -s) ]]; then
+            git add .
+            git commit -m "feat: add playgrounds via Gemini Worker (${{ inputs.section }}, ${{ inputs.model }})"
+            git push
+            echo "✅ Changes pushed"
+          else
+            echo "⚠️ No changes to commit"
+          fi
+      
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground-generation-logs
+          path: |
+            *.log
+            target-repo/pages/**/*.mdx
+          retention-days: 7

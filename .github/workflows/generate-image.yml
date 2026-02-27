@@ -1,0 +1,63 @@
+name: Generate Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Image generation prompt'
+        required: true
+        type: string
+      model:
+        description: 'Gemini image model'
+        required: false
+        default: 'gemini-3-pro-image-preview'
+        type: choice
+        options:
+          - gemini-3-pro-image-preview
+          - gemini-2.0-flash-image-preview
+      reference_image_url:
+        description: 'Reference image URL (optional)'
+        required: false
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install google-generativeai requests
+      
+      - name: Generate image
+        env:
+          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        run: |
+          python scripts/generate-image.py \
+            --prompt "${{ inputs.prompt }}" \
+            --model "${{ inputs.model }}" \
+            --output generated_image.png \
+            ${{ inputs.reference_image_url && format('--reference "{0}"', inputs.reference_image_url) || '' }}
+      
+      - name: Upload image
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-image
+          path: generated_image.png
+          retention-days: 30
+      
+      - name: Comment with image info
+        run: |
+          echo "✅ Image generated successfully"
+          echo "📝 Prompt: ${{ inputs.prompt }}"
+          echo "🤖 Model: ${{ inputs.model }}"
+          ls -lh generated_image.png
+          file generated_image.png

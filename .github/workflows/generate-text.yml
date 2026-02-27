@@ -1,0 +1,68 @@
+name: Generate Text
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Text generation prompt'
+        required: true
+        type: string
+      model:
+        description: 'Gemini text model'
+        required: false
+        default: 'gemini-3.1-pro-preview'
+        type: choice
+        options:
+          - gemini-3.1-pro-preview
+          - gemini-2.5-pro-exp
+          - gemini-2.0-flash-exp
+      max_tokens:
+        description: 'Max output tokens'
+        required: false
+        default: '8192'
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install google-generativeai
+      
+      - name: Generate text
+        env:
+          GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        run: |
+          python scripts/generate-text.py \
+            --prompt "${{ inputs.prompt }}" \
+            --model "${{ inputs.model }}" \
+            --max-tokens "${{ inputs.max_tokens }}" \
+            --output generated_text.txt
+      
+      - name: Upload text
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-text
+          path: generated_text.txt
+          retention-days: 30
+      
+      - name: Show preview
+        run: |
+          echo "✅ Text generated successfully"
+          echo "📝 Prompt: ${{ inputs.prompt }}"
+          echo "🤖 Model: ${{ inputs.model }}"
+          echo ""
+          echo "📄 Output preview (first 500 chars):"
+          head -c 500 generated_text.txt
+          echo ""
+          echo "..."
