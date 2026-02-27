@@ -49,7 +49,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install google-generativeai
+          pip install google-genai
       
       - name: Generate playgrounds
         env:
