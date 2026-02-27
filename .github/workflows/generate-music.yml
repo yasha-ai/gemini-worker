@@ -38,9 +38,13 @@ jobs:
         run: |
           pip install google-auth requests
       
+      - name: Setup Google Cloud credentials
+        run: |
+          echo '${{ secrets.VERTEX_AI_SERVICE_ACCOUNT }}' > /tmp/vertex-credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/vertex-credentials.json" >> $GITHUB_ENV
+      
       - name: Generate music
         env:
-          VERTEX_AI_API_KEY: ${{ secrets.VERTEX_AI_API_KEY }}
           VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
         run: |
           python scripts/generate-music.py \

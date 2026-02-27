@@ -21,11 +21,26 @@ def main():
     
     args = parser.parse_args()
     
-    api_key = os.environ.get("VERTEX_AI_API_KEY")
     project_id = os.environ.get("VERTEX_PROJECT_ID", "gen-lang-client-0851415172")
+    credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
     
-    if not api_key:
-        print("❌ VERTEX_AI_API_KEY not set")
+    if not credentials_path or not os.path.exists(credentials_path):
+        print("❌ GOOGLE_APPLICATION_CREDENTIALS not set or file not found")
+        sys.exit(1)
+    
+    # Get access token from service account
+    try:
+        from google.auth.transport.requests import Request
+        from google.oauth2 import service_account
+        
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path,
+            scopes=['https://www.googleapis.com/auth/cloud-platform']
+        )
+        credentials.refresh(Request())
+        api_key = credentials.token
+    except Exception as e:
+        print(f"❌ Failed to get access token from service account: {e}")
         sys.exit(1)
     
     location = "us-central1"
