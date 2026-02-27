@@ -16,6 +16,7 @@ Generates interactive Sandpack playgrounds for lessons.
 **Trigger:**
 ```bash
 gh workflow run generate-playgrounds.yml \
+  -R yasha-ai/gemini-worker \
   -f section=html \
   -f limit=10 \
   -f model=gemini-3.1-pro-preview
@@ -33,11 +34,12 @@ Generates images via Gemini image models.
 **Trigger:**
 ```bash
 gh workflow run generate-image.yml \
+  -R yasha-ai/gemini-worker \
   -f prompt="A futuristic AI workspace" \
   -f model=gemini-3-pro-image-preview
 ```
 
-**Outputs:** Image uploaded as artifact + optional commit.
+**Outputs:** Image uploaded as artifact.
 
 ---
 
@@ -49,11 +51,49 @@ Generates text content via Gemini text models.
 **Trigger:**
 ```bash
 gh workflow run generate-text.yml \
+  -R yasha-ai/gemini-worker \
   -f prompt="Write a short intro about AI" \
   -f model=gemini-3.1-pro-preview
 ```
 
 **Outputs:** Text file uploaded as artifact.
+
+---
+
+### 4. Generate Voice (TTS)
+**File:** `.github/workflows/generate-voice.yml`
+
+Generates voice audio via Gemini TTS (Text-to-Speech).
+
+**Trigger:**
+```bash
+gh workflow run generate-voice.yml \
+  -R yasha-ai/gemini-worker \
+  -f text="Привет! Это тест синтеза речи." \
+  -f voice=Fenrir \
+  -f model=gemini-2.5-flash-preview-tts
+```
+
+**Voices:** Fenrir (male, energetic), Kore, Charon, Aoede  
+**Outputs:** WAV audio file uploaded as artifact.
+
+---
+
+### 5. YouTube Ideas
+**File:** `.github/workflows/youtube-ideas.yml`
+
+Generates YouTube video ideas.
+
+**Trigger:**
+```bash
+gh workflow run youtube-ideas.yml \
+  -R yasha-ai/gemini-worker \
+  -f count=10 \
+  -f topic="AI coding tools" \
+  -f model=gemini-3.1-pro-preview
+```
+
+**Outputs:** JSON file with ideas uploaded as artifact.
 
 ---
 
