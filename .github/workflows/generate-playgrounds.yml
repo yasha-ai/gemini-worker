@@ -15,12 +15,13 @@ on:
       model:
         description: 'Gemini model to use'
         required: false
-        default: 'gemini-3.1-pro-preview'
+        default: 'gemini-2.0-flash'
         type: choice
         options:
+          - gemini-2.0-flash
+          - gemini-1.5-flash
+          - gemini-1.5-pro
           - gemini-3.1-pro-preview
-          - gemini-2.5-pro-exp
-          - gemini-2.0-flash-exp
       target_repo:
         description: 'Target repository (owner/repo)'
         required: false
