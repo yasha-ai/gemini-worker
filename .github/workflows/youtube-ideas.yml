@@ -15,11 +15,12 @@ on:
       model:
         description: 'Gemini model to use'
         required: false
-        default: 'gemini-2.5-flash'
+        default: 'gemini-3.1-pro-preview'
         type: choice
         options:
+          - gemini-3.1-pro-preview
+          - gemini-3-flash-preview
           - gemini-2.5-flash
-          - gemini-2.5-pro
 
 jobs:
   generate:
