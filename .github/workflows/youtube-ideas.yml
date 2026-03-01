@@ -15,11 +15,11 @@ on:
       model:
         description: 'Gemini model to use'
         required: false
-        default: 'gemini-2.0-flash'
+        default: 'gemini-2.5-flash'
         type: choice
         options:
+          - gemini-2.5-flash
           - gemini-2.0-flash
-          - gemini-2.5-pro-exp
 
 jobs:
   generate:
@@ -48,17 +48,9 @@ jobs:
             --model "${{ inputs.model }}" \
             --output youtube_ideas.json
       
-      - name: Upload ideas
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: youtube-ideas
           path: youtube_ideas.json
-          retention-days: 30
-      
-      - name: Show preview
-        run: |
-          echo "✅ Generated ${{ inputs.count }} YouTube ideas"
-          echo "🤖 Model: ${{ inputs.model }}"
-          echo ""
-          echo "--- Preview ---"
-          cat youtube_ideas.json | head -50
+          retention-days: 1
