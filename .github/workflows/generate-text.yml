@@ -42,11 +42,14 @@ jobs:
       - name: Generate text
         env:
           GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+          PROMPT: ${{ inputs.prompt }}
+          MODEL: ${{ inputs.model }}
+          MAX_TOKENS: ${{ inputs.max_tokens }}
         run: |
           python scripts/generate-text.py \
-            --prompt "${{ inputs.prompt }}" \
-            --model "${{ inputs.model }}" \
-            --max-tokens "${{ inputs.max_tokens }}" \
+            --prompt "$PROMPT" \
+            --model "$MODEL" \
+            --max-tokens "$MAX_TOKENS" \
             --output generated_text.txt
       
       - name: Upload result
@@ -57,10 +60,12 @@ jobs:
           retention-days: 30
       
       - name: Show preview
+        env:
+          PROMPT: ${{ inputs.prompt }}
+          MODEL: ${{ inputs.model }}
         run: |
           echo "✅ Text generated successfully"
-          echo "📝 Prompt: ${{ inputs.prompt }}"
-          echo "🤖 Model: ${{ inputs.model }}"
+          echo "📝 Model: $MODEL"
           echo ""
           echo "--- Preview (first 500 chars) ---"
           head -c 500 generated_text.txt
