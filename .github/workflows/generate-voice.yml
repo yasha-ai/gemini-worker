@@ -45,11 +45,14 @@ jobs:
       - name: Generate voice
         env:
           GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+          TEXT_INPUT: ${{ inputs.text }}
+          VOICE_INPUT: ${{ inputs.voice }}
+          MODEL_INPUT: ${{ inputs.model }}
         run: |
           python scripts/generate-voice.py \
-            --text "${{ inputs.text }}" \
-            --voice "${{ inputs.voice }}" \
-            --model "${{ inputs.model }}" \
+            --text "$TEXT_INPUT" \
+            --voice "$VOICE_INPUT" \
+            --model "$MODEL_INPUT" \
             --output generated_voice.wav
       
       - name: Upload audio
@@ -62,9 +65,9 @@ jobs:
       - name: Show info
         run: |
           echo "✅ Voice generated successfully"
-          echo "📝 Text: ${{ inputs.text }}"
-          echo "🎵 Voice: ${{ inputs.voice }}"
-          echo "🤖 Model: ${{ inputs.model }}"
+          echo "📝 Text: $TEXT_INPUT"
+          echo "🎵 Voice: $VOICE_INPUT"
+          echo "🤖 Model: $MODEL_INPUT"
           echo ""
           echo "--- Audio file info ---"
           ffprobe -v quiet -print_format json -show_format -show_streams generated_voice.wav | jq '.format | {duration, size}'
