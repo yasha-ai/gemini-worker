@@ -24,6 +24,11 @@ on:
         description: 'Reference image URL (optional, ignored if use_yasha_avatar=true)'
         required: false
         type: string
+      filename:
+        description: 'Output filename (optional, default: generated_image.png)'
+        required: false
+        default: 'generated_image.png'
+        type: string
 
 jobs:
   generate:
@@ -45,38 +50,46 @@ jobs:
       - name: Generate image
         env:
           GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+          PROMPT: ${{ inputs.prompt }}
+          MODEL: ${{ inputs.model }}
+          USE_YASHA_AVATAR: ${{ inputs.use_yasha_avatar }}
+          REFERENCE_URL: ${{ inputs.reference_image_url }}
+          FILENAME: ${{ inputs.filename }}
         run: |
-          if [ "${{ inputs.use_yasha_avatar }}" == "true" ]; then
+          OUTFILE="${FILENAME:-generated_image.png}"
+          if [ "$USE_YASHA_AVATAR" == "true" ]; then
             python scripts/generate-image.py \
-              --prompt "${{ inputs.prompt }}" \
-              --model "${{ inputs.model }}" \
-              --output generated_image.png \
+              --prompt "$PROMPT" \
+              --model "$MODEL" \
+              --output "$OUTFILE" \
               --reference assets/yasha_avatar_v3.jpg
-          elif [ -n "${{ inputs.reference_image_url }}" ]; then
+          elif [ -n "$REFERENCE_URL" ]; then
             python scripts/generate-image.py \
-              --prompt "${{ inputs.prompt }}" \
-              --model "${{ inputs.model }}" \
-              --output generated_image.png \
-              --reference "${{ inputs.reference_image_url }}"
+              --prompt "$PROMPT" \
+              --model "$MODEL" \
+              --output "$OUTFILE" \
+              --reference "$REFERENCE_URL"
           else
             python scripts/generate-image.py \
-              --prompt "${{ inputs.prompt }}" \
-              --model "${{ inputs.model }}" \
-              --output generated_image.png
+              --prompt "$PROMPT" \
+              --model "$MODEL" \
+              --output "$OUTFILE"
           fi
       
       - name: Upload image
         uses: actions/upload-artifact@v4
         with:
           name: generated-image
-          path: generated_image.png
+          path: ${{ inputs.filename || 'generated_image.png' }}
           retention-days: 30
       
       - name: Comment with image info
+        env:
+          MODEL: ${{ inputs.model }}
+          FILENAME: ${{ inputs.filename }}
         run: |
           echo "✅ Image generated successfully"
-          echo "📝 Prompt: ${{ inputs.prompt }}"
-          echo "🤖 Model: ${{ inputs.model }}"
-          echo "🎭 Yasha avatar: ${{ inputs.use_yasha_avatar }}"
-          ls -lh generated_image.png
-          file generated_image.png
+          echo "🤖 Model: $MODEL"
+          echo "📄 File: ${FILENAME:-generated_image.png}"
+          ls -lh "${FILENAME:-generated_image.png}"
+          file "${FILENAME:-generated_image.png}"
