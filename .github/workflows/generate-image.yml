@@ -14,7 +14,8 @@ on:
         type: choice
         options:
           - gemini-3-pro-image-preview
-          - gemini-2.0-flash-image-preview
+          - gemini-3.1-flash-image-preview
+          - gemini-2.5-flash-image
       use_yasha_avatar:
         description: 'Use Yasha avatar as reference'
         required: false
