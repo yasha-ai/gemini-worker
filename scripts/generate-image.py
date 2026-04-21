@@ -65,22 +65,25 @@ def try_generate(api_key, model, parts, output_path):
     payload = {"contents": [{"parts": parts}]}
 
     for attempt in range(1, MAX_RETRIES + 1):
-        print(f"   Attempt {attempt}/{MAX_RETRIES} with model: {model}")
+        print(f"\n   🔁 Попытка {attempt}/{MAX_RETRIES} — модель: {model}")
         try:
             response = requests.post(url, json=payload, timeout=90)
 
             if response.status_code == 503:
-                print(f"   ⚠️  503 Service Unavailable")
+                print(f"   ❌ Попытка {attempt} провалилась: 503 — модель перегружена")
                 if attempt < MAX_RETRIES:
-                    print(f"   Retrying in {RETRY_DELAY}s...")
+                    print(f"   ⏳ Ждём {RETRY_DELAY}с перед следующей попыткой...")
                     time.sleep(RETRY_DELAY)
+                else:
+                    print(f"   ⛔ Все {MAX_RETRIES} попытки с моделью {model} исчерпаны")
                 continue
 
             response.raise_for_status()
             data = response.json()
 
             if 'candidates' not in data:
-                print(f"   ❌ No candidates in response: {json.dumps(data, indent=2)}")
+                print(f"   ❌ Попытка {attempt} провалилась: нет candidates в ответе")
+                print(f"   Ответ: {json.dumps(data, indent=2)}")
                 return False
 
             for candidate in data.get('candidates', []):
@@ -90,34 +93,36 @@ def try_generate(api_key, model, parts, output_path):
                         img_bytes = base64.b64decode(img_b64)
 
                         if len(img_bytes) < 1000:
-                            print(f"   ⚠️  Suspicious image size: {len(img_bytes)} bytes")
+                            print(f"   ⚠️  Подозрительно маленький файл: {len(img_bytes)} байт")
 
                         with open(output_path, 'wb') as f:
                             f.write(img_bytes)
 
-                        print(f"✅ Image saved to: {output_path}")
-                        print(f"   Model used: {model}")
-                        print(f"   Size: {len(img_bytes):,} bytes")
+                        print(f"\n✅ Изображение сохранено: {output_path}")
+                        print(f"   Модель: {model} (попытка {attempt}/{MAX_RETRIES})")
+                        print(f"   Размер: {len(img_bytes):,} байт")
                         return True
 
                     if 'text' in part:
-                        print(f"   💬 Model response: {part['text']}")
+                        print(f"   💬 Текст от модели: {part['text']}")
 
-            print(f"   ❌ No image in response")
+            print(f"   ❌ Попытка {attempt} провалилась: изображение не найдено в ответе")
             return False
 
         except requests.exceptions.Timeout:
-            print(f"   ⚠️  Timeout on attempt {attempt}")
+            print(f"   ❌ Попытка {attempt} провалилась: timeout (>90с)")
             if attempt < MAX_RETRIES:
-                print(f"   Retrying in {RETRY_DELAY}s...")
+                print(f"   ⏳ Ждём {RETRY_DELAY}с перед следующей попыткой...")
                 time.sleep(RETRY_DELAY)
+            else:
+                print(f"   ⛔ Все {MAX_RETRIES} попытки с моделью {model} исчерпаны")
         except requests.exceptions.RequestException as e:
-            print(f"   ❌ HTTP Error: {e}")
+            print(f"   ❌ Попытка {attempt} провалилась: HTTP ошибка — {e}")
             if hasattr(e, 'response') and e.response is not None:
-                print(f"   Response: {e.response.text}")
+                print(f"   Ответ сервера: {e.response.text[:500]}")
             return False
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            print(f"   ❌ Попытка {attempt} провалилась: неожиданная ошибка — {e}")
             import traceback
             traceback.print_exc()
             return False
