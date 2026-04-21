@@ -2,7 +2,7 @@
 """
 Gemini Image Generator using REST API
 Retry logic with automatic model fallback chain on 503/timeout/404
-Sends Telegram status updates during generation
+Sends final Telegram notification on success or failure
 """
 import argparse
 import base64
@@ -81,14 +81,10 @@ def try_generate(api_key, model, parts, output_path):
             if response.status_code == 503:
                 msg = f"❌ Попытка {attempt}/{MAX_RETRIES} провалилась: модель {model} перегружена (503)"
                 print(f"   {msg}")
-                tg(msg)
                 if attempt < MAX_RETRIES:
                     wait_msg = f"⏳ Жду {RETRY_DELAY}с и пробую снова..."
                     print(f"   {wait_msg}")
-                    tg(wait_msg)
                     time.sleep(RETRY_DELAY)
-                else:
-                    tg(f"⛔ Все {MAX_RETRIES} попытки с {model} исчерпаны")
                 continue
 
             response.raise_for_status()
@@ -97,7 +93,6 @@ def try_generate(api_key, model, parts, output_path):
             if 'candidates' not in data:
                 msg = f"❌ Попытка {attempt}/{MAX_RETRIES} провалилась: нет candidates в ответе"
                 print(f"   {msg}")
-                tg(msg)
                 return False
 
             for candidate in data.get('candidates', []):
@@ -121,31 +116,24 @@ def try_generate(api_key, model, parts, output_path):
 
             msg = f"❌ Попытка {attempt}/{MAX_RETRIES} провалилась: изображение не найдено в ответе"
             print(f"   {msg}")
-            tg(msg)
             return False
 
         except requests.exceptions.Timeout:
             msg = f"❌ Попытка {attempt}/{MAX_RETRIES} провалилась: timeout >90с"
             print(f"   {msg}")
-            tg(msg)
             if attempt < MAX_RETRIES:
                 wait_msg = f"⏳ Жду {RETRY_DELAY}с и пробую снова..."
                 print(f"   {wait_msg}")
-                tg(wait_msg)
                 time.sleep(RETRY_DELAY)
-            else:
-                tg(f"⛔ Все {MAX_RETRIES} попытки с {model} исчерпаны")
         except requests.exceptions.RequestException as e:
             msg = f"❌ Попытка {attempt}/{MAX_RETRIES} провалилась: HTTP ошибка — {e}"
             print(f"   {msg}")
-            tg(msg)
             if hasattr(e, 'response') and e.response is not None:
                 print(f"   Ответ сервера: {e.response.text[:500]}")
             return False
         except Exception as e:
             msg = f"❌ Попытка {attempt}/{MAX_RETRIES} провалилась: неожиданная ошибка — {e}"
             print(f"   {msg}")
-            tg(msg)
             import traceback
             traceback.print_exc()
             return False
@@ -171,8 +159,6 @@ def main():
     print(f"   Primary model: {args.model}")
     print(f"   Prompt: {args.prompt[:80]}")
 
-    tg(f"🎨 Начинаю генерацию изображения\nМодель: {args.model}\nПромпт: {args.prompt[:100]}")
-
     parts = build_parts(args.prompt, args.reference)
 
     models_to_try = [args.model]
@@ -182,12 +168,10 @@ def main():
 
     for i, model in enumerate(models_to_try):
         if i > 0:
-            msg = f"🔄 Переключаюсь на следующую модель: {model}"
-            print(f"\n{msg}")
-            tg(msg)
+            print(f"\n🔄 Переключаюсь на следующую модель: {model}")
         success = try_generate(api_key, model, parts, args.output)
         if success:
-            tg(f"✅ Готово! Изображение сгенерировано через {model}")
+            tg(f"✅ Изображение сгенерировано через {model}")
             sys.exit(0)
 
     tg("❌ Все модели исчерпаны. Генерация провалилась.")
