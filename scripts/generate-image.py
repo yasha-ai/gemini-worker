@@ -1,4 +1,5 @@
-#!/usr/bin/env python3"""
+#!/usr/bin/env python3
+"""
 Fixed Gemini Image Generator using REST API
 Handles C2PA metadata and proper response parsing
 Retry logic with automatic model fallback on 503/timeout
