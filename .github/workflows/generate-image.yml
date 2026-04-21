@@ -46,6 +46,8 @@ jobs:
       - name: Generate image
         env:
           GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ "${{ inputs.use_yasha_avatar }}" == "true" ]; then
             python scripts/generate-image.py \
